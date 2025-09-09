@@ -1,0 +1,5 @@
+.env
+venv/
+generated_books/
+generated_images/
+videos

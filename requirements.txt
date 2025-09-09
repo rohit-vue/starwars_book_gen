@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+openai
+python-dotenv
+requests
+weasyprint
+jinja2
+psutil>=5.9.0
+Pillow>=10.0.0

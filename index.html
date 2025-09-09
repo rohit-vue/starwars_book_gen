@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Star Wars Book Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sw-yellow: #FFE81F;
+            --dark-space: #000000;
+            --light-text: #E8E8E8;
+        }
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background-color: var(--dark-space);
+            color: var(--light-text);
+            margin: 0;
+            padding: 2em;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        /* --- STYLES FOR LOCAL VIDEO BACKGROUND --- */
+        #bg-video {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            z-index: -2;
+            background: #000 no-repeat;
+            background-size: cover;
+        }
+        
+        .video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: -1;
+        }
+        /* --- End of Video Styles --- */
+
+        .container {
+            position: relative;
+            z-index: 10;
+            max-width: 600px;
+            width: 100%;
+            background-color: rgba(21, 21, 21, 0.7);
+            padding: 2em;
+            border-radius: 10px;
+            border: 1px solid #333;
+        }
+        
+        /* ... other styles are the same ... */
+        h1 { color: var(--sw-yellow); text-shadow: 0 0 10px rgba(255, 232, 31, 0.4); }
+        form { display: flex; flex-direction: column; gap: 1em; }
+        textarea { background-color: #222; border: 2px solid #444; border-radius: 5px; color: var(--light-text); font-family: 'Arial', sans-serif; font-size: 16px; padding: 15px; min-height: 120px; resize: vertical; }
+        textarea:focus { outline: none; border-color: var(--sw-yellow); }
+        button { background-color: var(--sw-yellow); color: #000; border: none; padding: 15px 20px; font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 700; cursor: pointer; text-transform: uppercase; }
+        .hidden { display: none; }
+        .spinner { border: 4px solid #444; border-top: 4px solid var(--sw-yellow); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 1em auto; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        #result a { display: inline-block; margin-top: 2em; background-color: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <!-- NEW: Using the HTML <video> tag for local playback -->
+    <video autoplay loop muted playsinline id="bg-video">
+        <source src="/videos/TIE Fighter - short film - OtaKing Animation (720p, h264) (online-video-cutter.com).mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <div class="video-overlay"></div>
+
+    <!-- Main Content (Unchanged) -->
+    <div class="container">
+        <h1>Star Wars Book Generator</h1>
+        <p>Enter a prompt to generate your own personalized Star Wars fan novel. This may take several minutes.</p>
+        <form id="bookForm">
+            <textarea id="userInput" placeholder="e.g., A story about a veteran Clone Trooper who refuses to execute Order 66..." required></textarea>
+            <button type="submit">Generate Book</button>
+        </form>
+        <div id="loader" class="hidden">
+            <div class="spinner"></div>
+            <p>Generating your masterpiece...</p>
+        </div>
+        <div id="result" class="hidden">
+            <h2>Generation Complete!</h2>
+            <a href="#" id="downloadLink" download>Download Your Book</a>
+        </div>
+        <div id="error" class="hidden">
+            <h2>An Error Occurred</h2>
+            <p id="errorMessage"></p>
+        </div>
+    </div>
+
+    <script>
+        // The JavaScript for the form submission is unchanged and does not need to be modified.
+        const bookForm = document.getElementById('bookForm');
+        bookForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const userInput = document.getElementById('userInput').value;
+            bookForm.classList.add('hidden');
+            document.getElementById('result').classList.add('hidden');
+            document.getElementById('error').classList.add('hidden');
+            document.getElementById('loader').classList.remove('hidden');
+            
+            try {
+                const response = await fetch('/generate-book/', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_input: userInput }),
+                });
+                document.getElementById('loader').classList.add('hidden');
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'An unknown error occurred.');
+                }
+                const data = await response.json();
+                document.getElementById('downloadLink').href = data.pdf_file;
+                document.getElementById('result').classList.remove('hidden');
+                bookForm.classList.remove('hidden');
+            } catch (err) {
+                document.getElementById('loader').classList.add('hidden');
+                document.getElementById('errorMessage').textContent = err.message;
+                document.getElementById('error').classList.remove('hidden');
+                bookForm.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
