@@ -19,10 +19,18 @@ app = FastAPI(
     version="4.0.0"
 )
 
+# --- NEW: Create directories on startup to prevent errors ---
+# This ensures the folders exist before FastAPI tries to mount them.
+# The path used here will be the root of your project on Render.
+os.makedirs("generated_books", exist_ok=True)
+os.makedirs("ui_images", exist_ok=True)
+os.makedirs("videos", exist_ok=True)
+# --- End of New Code ---
+
 # Serve the static folders
 app.mount("/generated_books", StaticFiles(directory="generated_books"), name="generated_books")
 app.mount("/ui_images", StaticFiles(directory="ui_images"), name="ui_images")
-app.mount("/videos", StaticFiles(directory="videos"), name="videos") # <-- NEW LINE TO SERVE VIDEOS
+app.mount("/videos", StaticFiles(directory="videos"), name="videos")
 
 class BookRequest(BaseModel):
     user_input: str
@@ -39,11 +47,12 @@ async def read_root():
 
 @app.post("/generate-book/", summary="Generate a Star Wars Book")
 async def generate_star_wars_book(request: BookRequest):
+    # This function remains the same, no changes needed here
     user_prompt = request.user_input.strip()
     if not user_prompt:
         raise HTTPException(status_code=400, detail="Prompt cannot be empty.")
     
-    final_page_count = min(request.num_pages, 30)
+    final_page_count = min(request.num_pages, 100)
     print(f"Processing request for a {final_page_count}-page book.")
 
     try:
